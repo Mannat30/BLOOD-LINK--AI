@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { toast } from 'react-toastify'
-import { donorService, bloodRequestService, donationHistoryService } from '../services/apiService'
-import { BloodGroup } from '../types/enums'
-import { HiUser, HiHeart, HiCalendar, HiChartBar } from 'react-icons/hi'
+import { Link, useNavigate } from 'react-router-dom'
+
+import {
+  donorService,
+  bloodRequestService,
+  donationHistoryService
+} from '../services/apiService'
+
+import {
+  HiUser,
+  HiHeart,
+  HiCalendar,
+  HiChartBar,
+  HiBell,
+  HiArrowRight,
+  HiCheckCircle,
+  HiLocationMarker,
+  HiRefresh,
+  HiShieldCheck,
+  HiClock,
+  HiUserGroup
+} from 'react-icons/hi'
 
 const DonorDashboard = ({ user }) => {
   const [donorProfile, setDonorProfile] = useState(null)
@@ -11,21 +28,31 @@ const DonorDashboard = ({ user }) => {
   const [donations, setDonations] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const navigate = useNavigate()
+
   useEffect(() => {
     fetchData()
   }, [])
 
   const fetchData = async () => {
     try {
-      const [profileRes, requestsRes, donationsRes] = await Promise.all([
-        donorService.getProfile(user.id),
-        bloodRequestService.getPendingRequests(),
-        donationHistoryService.getAllDonations()
-      ])
-      
+      const [profileRes, requestsRes, donationsRes] =
+          await Promise.all([
+            donorService.getProfile(user.id),
+            bloodRequestService.getPendingRequests(),
+            donationHistoryService.getAllDonations()
+          ])
+
       setDonorProfile(profileRes.data)
+
       setBloodRequests(requestsRes.data)
-      setDonations(donationsRes.data.filter(d => d.donorId === user.id))
+
+      setDonations(
+          donationsRes.data.filter(
+              donation => donation.donorId === user.id
+          )
+      )
+
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -33,149 +60,753 @@ const DonorDashboard = ({ user }) => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+  // ==========================================
+  // HELPERS
+  // ==========================================
+
+  const formatBloodGroup = (group) => {
+
+    const groups = {
+      A_POSITIVE: 'A+',
+      A_NEGATIVE: 'A-',
+      B_POSITIVE: 'B+',
+      B_NEGATIVE: 'B-',
+      AB_POSITIVE: 'AB+',
+      AB_NEGATIVE: 'AB-',
+      O_POSITIVE: 'O+',
+      O_NEGATIVE: 'O-'
+    }
+
+    return groups[group] || group || 'Not set'
   }
 
+
+  const formatText = (value) => {
+
+    if (!value) return '--'
+
+    return value
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, char => char.toUpperCase())
+
+  }
+
+
+  const getStatusStyle = (status) => {
+
+    switch (status) {
+
+      case 'PENDING':
+        return 'bg-amber-50 text-amber-700 border-amber-200'
+
+      case 'MATCHING':
+        return 'bg-blue-50 text-blue-700 border-blue-200'
+
+      case 'ACCEPTED':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+
+      default:
+        return 'bg-slate-50 text-slate-600 border-slate-200'
+
+    }
+
+  }
+
+
+  const getPriorityStyle = (priority) => {
+
+    switch (priority) {
+
+      case 'CRITICAL':
+        return 'bg-red-50 text-red-700'
+
+      case 'HIGH':
+        return 'bg-orange-50 text-orange-700'
+
+      default:
+        return 'bg-emerald-50 text-emerald-700'
+
+    }
+
+  }
+
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
+  if (loading) {
+
+    return (
+
+        <div className="flex min-h-[70vh] items-center justify-center">
+
+          <div className="text-center">
+
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50">
+
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-red-200 border-t-red-600" />
+
+            </div>
+
+            <p className="mt-4 text-sm text-slate-500">
+              Loading your donor dashboard...
+            </p>
+
+          </div>
+
+        </div>
+
+    )
+
+  }
+
+
+  const firstName =
+      user?.name?.split(' ')[0] || 'Donor'
+
+
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-red-100 rounded-full">
-              <HiUser className="h-6 w-6 text-red-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Blood Group</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {donorProfile?.bloodGroup || 'Not set'}
+
+      <div className="mx-auto max-w-7xl space-y-7">
+
+
+        {/* =================================================
+          HERO
+      ================================================= */}
+
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-red-600 to-rose-700 p-6 text-white shadow-xl shadow-red-600/10 sm:p-8">
+
+          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/10" />
+
+          <div className="absolute -bottom-28 right-20 h-56 w-56 rounded-full bg-white/5" />
+
+
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
+
+            <div className="max-w-2xl">
+
+              <div className="flex flex-wrap items-center gap-2">
+
+              <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+                Donor Portal
+              </span>
+
+                {donorProfile?.available && (
+
+                    <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1.5 text-xs font-semibold text-emerald-100">
+
+                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+
+                  Available to Donate
+
+                </span>
+
+                )}
+
+              </div>
+
+
+              <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+
+                Welcome, {firstName} ❤️
+
+              </h1>
+
+
+              <p className="mt-3 max-w-xl text-sm leading-6 text-red-100 sm:text-base">
+
+                Your donation has the power to help someone when
+                they need it most. Explore current blood requests
+                and make an impact.
+
               </p>
+
+
+              <div className="mt-6 flex flex-wrap gap-3">
+
+                <button
+                    onClick={() => navigate('/blood-requests')}
+                    className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-lg transition hover:-translate-y-0.5 hover:bg-red-50"
+                >
+
+                  <HiHeart className="text-lg" />
+
+                  Find Blood Requests
+
+                  <HiArrowRight />
+
+                </button>
+
+
+                <button
+                    onClick={() => navigate('/donor-profile')}
+                    className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+
+                  <HiUser />
+
+                  My Profile
+
+                </button>
+
+              </div>
+
             </div>
+
+
+            <div className="hidden lg:flex">
+
+              <div className="flex h-40 w-40 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur">
+
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/10">
+
+                  <HiHeart className="text-7xl text-white" />
+
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
+
+        </section>
+
+
+        {/* =================================================
+          STATS
+      ================================================= */}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+
+          {/* Blood Group */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50">
+
+              <HiHeart className="text-2xl text-red-600" />
+
+            </div>
+
+            <p className="mt-5 text-sm text-slate-400">
+              Blood Group
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-slate-800">
+
+              {formatBloodGroup(donorProfile?.bloodGroup)}
+
+            </p>
+
+          </div>
+
+
+          {/* Availability */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                donorProfile?.available
+                    ? 'bg-emerald-50'
+                    : 'bg-slate-100'
+            }`}>
+
+              <HiShieldCheck
+                  className={`text-2xl ${
+                      donorProfile?.available
+                          ? 'text-emerald-600'
+                          : 'text-slate-500'
+                  }`}
+              />
+
+            </div>
+
+            <p className="mt-5 text-sm text-slate-400">
+              Donation Status
+            </p>
+
+            <p className={`mt-1 text-xl font-bold ${
+                donorProfile?.available
+                    ? 'text-emerald-600'
+                    : 'text-slate-700'
+            }`}>
+
+              {donorProfile?.available
+                  ? 'Available'
+                  : 'Unavailable'}
+
+            </p>
+
+          </div>
+
+
+          {/* Donations */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
+
+              <HiCalendar className="text-2xl text-blue-600" />
+
+            </div>
+
+            <p className="mt-5 text-sm text-slate-400">
+              Total Donations
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-slate-800">
+              {donations.length}
+            </p>
+
+          </div>
+
+
+          {/* Requests */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50">
+
+              <HiUserGroup className="text-2xl text-orange-600" />
+
+            </div>
+
+            <p className="mt-5 text-sm text-slate-400">
+              Active Requests
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-slate-800">
+              {bloodRequests.length}
+            </p>
+
+          </div>
+
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <HiHeart className="h-6 w-6 text-blue-600" />
+
+        {/* =================================================
+          DONOR STATUS
+      ================================================= */}
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="flex items-center gap-4">
+
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                  donorProfile?.available
+                      ? 'bg-emerald-50'
+                      : 'bg-slate-100'
+              }`}>
+
+                <HiShieldCheck
+                    className={`text-2xl ${
+                        donorProfile?.available
+                            ? 'text-emerald-600'
+                            : 'text-slate-500'
+                    }`}
+                />
+
+              </div>
+
+
+              <div>
+
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Donation Availability
+                </p>
+
+                <h2 className="mt-1 font-bold text-slate-800">
+
+                  {donorProfile?.available
+                      ? 'You are available to donate'
+                      : 'You are currently unavailable'}
+
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-400">
+
+                  {donorProfile?.available
+                      ? 'You may be contacted for matching blood requests.'
+                      : 'Update your profile when you are ready to donate.'}
+
+                </p>
+
+              </div>
+
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Available</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {donorProfile?.available ? 'Yes' : 'No'}
+
+
+            <Link
+                to="/donor-profile"
+                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+
+              Update Status
+
+              <HiArrowRight />
+
+            </Link>
+
+          </div>
+
+        </section>
+
+
+        {/* =================================================
+          QUICK ACTIONS
+      ================================================= */}
+
+        <section>
+
+          <div className="mb-5">
+
+            <p className="text-xs font-bold uppercase tracking-wider text-red-500">
+              Shortcuts
+            </p>
+
+            <h2 className="mt-1 text-2xl font-bold text-slate-800">
+              Quick Actions
+            </h2>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+
+            <Link
+                to="/blood-requests"
+                className="group rounded-2xl border border-red-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50">
+
+                <HiHeart className="text-2xl text-red-600" />
+
+              </div>
+
+              <h3 className="mt-5 font-bold text-slate-800">
+                Find Requests
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                Find people who need your blood group.
               </p>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full">
-              <HiChartBar className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Donations</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {donations.length}
+              <HiArrowRight className="mt-4 text-red-500 transition group-hover:translate-x-1" />
+
+            </Link>
+
+
+            <Link
+                to="/donor-profile"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
+
+                <HiUser className="text-2xl text-blue-600" />
+
+              </div>
+
+              <h3 className="mt-5 font-bold text-slate-800">
+                Donor Profile
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                Keep your donor information updated.
               </p>
-            </div>
+
+              <HiArrowRight className="mt-4 text-blue-500 transition group-hover:translate-x-1" />
+
+            </Link>
+
+
+            <Link
+                to="/donation-history"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50">
+
+                <HiCalendar className="text-2xl text-emerald-600" />
+
+              </div>
+
+              <h3 className="mt-5 font-bold text-slate-800">
+                Donation History
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                See your previous donations.
+              </p>
+
+              <HiArrowRight className="mt-4 text-emerald-500 transition group-hover:translate-x-1" />
+
+            </Link>
+
+
+            <Link
+                to="/notifications"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50">
+
+                <HiBell className="text-2xl text-violet-600" />
+
+              </div>
+
+              <h3 className="mt-5 font-bold text-slate-800">
+                Notifications
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                Check donor matching updates.
+              </p>
+
+              <HiArrowRight className="mt-4 text-violet-500 transition group-hover:translate-x-1" />
+
+            </Link>
+
           </div>
-        </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Link
-            to="/donor-profile"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-center"
-          >
-            <HiUser className="h-8 w-8 mx-auto text-blue-600" />
-            <p className="mt-2 text-sm text-gray-600">Edit Profile</p>
-          </Link>
-          <Link
-            to="/blood-requests"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-center"
-          >
-            <HiHeart className="h-8 w-8 mx-auto text-red-600" />
-            <p className="mt-2 text-sm text-gray-600">Blood Requests</p>
-          </Link>
-          <Link
-            to="/donations"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-center"
-          >
-            <HiCalendar className="h-8 w-8 mx-auto text-green-600" />
-            <p className="mt-2 text-sm text-gray-600">Donation History</p>
-          </Link>
-          <Link
-            to="/notifications"
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-center"
-          >
-            <HiChartBar className="h-8 w-8 mx-auto text-purple-600" />
-            <p className="mt-2 text-sm text-gray-600">Notifications</p>
-          </Link>
-        </div>
-      </div>
+        </section>
 
-      {/* Recent Donations */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Donations</h2>
-        </div>
-        <div className="p-6">
+
+        {/* =================================================
+          RECENT DONATIONS
+      ================================================= */}
+
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:px-6">
+
+            <div>
+
+              <p className="text-xs font-bold uppercase tracking-wider text-red-500">
+                Your Impact
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold text-slate-800">
+                Recent Donations
+              </h2>
+
+            </div>
+
+
+            <div className="flex gap-2">
+
+              <button
+                  onClick={fetchData}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+
+                <HiRefresh />
+
+                Refresh
+
+              </button>
+
+
+              {donations.length > 0 && (
+
+                  <Link
+                      to="/donation-history"
+                      className="flex items-center gap-1 rounded-xl bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-100"
+                  >
+
+                    View all
+
+                    <HiArrowRight />
+
+                  </Link>
+
+              )}
+
+            </div>
+
+          </div>
+
+
           {donations.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+
+              <div className="overflow-x-auto">
+
+                <table className="w-full min-w-[650px]">
+
+                  <thead className="bg-slate-50">
+
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Donation Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Units
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Status
                     </th>
+
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {donations.slice(0, 5).map((donation) => (
-                    <tr key={donation.donationId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(donation.donationDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {donation.unitsDonated} units
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs font-medium rounded-full ${
-                          donation.successful 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {donation.successful ? 'Successful' : 'Failed'}
+
+                  </thead>
+
+
+                  <tbody>
+
+                  {donations.slice(0, 5).map(donation => (
+
+                      <tr
+                          key={donation.donationId}
+                          className="border-b border-slate-100 transition hover:bg-slate-50"
+                      >
+
+                        <td className="px-6 py-4">
+
+                          <div className="flex items-center gap-3">
+
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
+
+                              <HiCalendar className="text-red-600" />
+
+                            </div>
+
+                            <span className="text-sm font-medium text-slate-700">
+
+                          {new Date(
+                              donation.donationDate
+                          ).toLocaleDateString()}
+
                         </span>
-                      </td>
-                    </tr>
+
+                          </div>
+
+                        </td>
+
+
+                        <td className="px-6 py-4">
+
+                      <span className="font-semibold text-slate-700">
+
+                        {donation.unitsDonated} unit
+                        {donation.unitsDonated !== 1
+                            ? 's'
+                            : ''}
+
+                      </span>
+
+                        </td>
+
+
+                        <td className="px-6 py-4">
+
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                          donation.successful
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-red-50 text-red-700'
+                      }`}>
+
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                            donation.successful
+                                ? 'bg-emerald-500'
+                                : 'bg-red-500'
+                        }`} />
+
+                        {donation.successful
+                            ? 'Successful'
+                            : 'Failed'}
+
+                      </span>
+
+                        </td>
+
+                      </tr>
+
                   ))}
-                </tbody>
-              </table>
-            </div>
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
           ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500">No donations yet</p>
-            </div>
+
+              <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50">
+
+                  <HiHeart className="text-3xl text-red-400" />
+
+                </div>
+
+                <h3 className="mt-5 font-semibold text-slate-700">
+                  No donations yet
+                </h3>
+
+                <p className="mt-2 max-w-sm text-sm text-slate-400">
+                  Your completed donations will appear here.
+                  Keep your donor profile updated to receive
+                  matching opportunities.
+                </p>
+
+                <Link
+                    to="/blood-requests"
+                    className="mt-5 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-600/20 hover:bg-red-700"
+                >
+                  Find Opportunities
+                </Link>
+
+              </div>
+
           )}
-        </div>
+
+        </section>
+
+
+        {/* =================================================
+          MOTIVATION
+      ================================================= */}
+
+        <section className="rounded-2xl border border-red-100 bg-red-50 p-5 sm:p-6">
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white">
+
+              <HiHeart className="text-xl text-red-600" />
+
+            </div>
+
+            <div>
+
+              <h3 className="font-bold text-red-800">
+                Your donation can make a difference
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-red-600">
+                Every successful donation is an opportunity to
+                help someone through a critical moment.
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
       </div>
-    </div>
+
   )
 }
 

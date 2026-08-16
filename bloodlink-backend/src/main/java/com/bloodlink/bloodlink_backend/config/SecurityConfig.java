@@ -2,18 +2,25 @@ package com.bloodlink.bloodlink_backend.config;
 
 import com.bloodlink.bloodlink_backend.security.CustomUserDetailsService;
 import com.bloodlink.bloodlink_backend.security.JwtAuthenticationFilter;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
+
+import org.springframework.http.HttpMethod;
+
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -26,38 +33,45 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 
-    // =========================
+    // =====================================================
     // SECURITY FILTER CHAIN
-    // =========================
+    // =====================================================
 
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http) throws Exception {
 
         http
+                .cors(Customizer.withDefaults())
 
-                // Disable CSRF because we are using JWT
                 .csrf(csrf -> csrf.disable())
 
-                // JWT = Stateless authentication
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
-                        ))
+                        )
+                )
 
-                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // Authentication APIs don't require JWT
-                        .requestMatchers("/api/auth/**")
+                        // CORS preflight
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
                         .permitAll()
 
-                        // Everything else requires authentication
+                        // Login + Register
+                        .requestMatchers(
+                                "/api/auth/**"
+                        )
+                        .permitAll()
+
+                        // Everything else
                         .anyRequest()
                         .authenticated()
                 )
 
-                // Add JWT filter before Spring's username/password filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -67,39 +81,31 @@ public class SecurityConfig {
     }
 
 
-    // =========================
-    // PASSWORD ENCODER
-    // =========================
-
-    @Bean
-    public PasswordEncoder encode() {
-
-        return new BCryptPasswordEncoder();
-    }
-
-
-    // =========================
+    // =====================================================
     // AUTHENTICATION PROVIDER
-    // =========================
+    // =====================================================
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(
+            PasswordEncoder passwordEncoder) {
 
         DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(customUserDetailsService);
+                new DaoAuthenticationProvider(
+                        customUserDetailsService
+                );
 
-        provider.setPasswordEncoder(encode());
+        provider.setPasswordEncoder(passwordEncoder);
 
         return provider;
     }
 
 
-    // =========================
+    // =====================================================
     // AUTHENTICATION MANAGER
-    // =========================
+    // =====================================================
 
     @Bean
-    public AuthenticationManager manager(
+    public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config)
             throws Exception {
 

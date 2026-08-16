@@ -3,8 +3,8 @@ package com.bloodlink.bloodlink_backend.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -12,17 +12,14 @@ import java.util.Arrays;
 public class CorsConfig {
 
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5178",
-                "http://localhost:5177",
                 "http://localhost:5176",
-                "http://localhost:5175",
-                "http://localhost:5174",
-                "http://localhost:5173"
+                "http://localhost:5177",
+                "http://localhost:5178"
         ));
 
         config.setAllowedMethods(Arrays.asList(
@@ -43,6 +40,6 @@ public class CorsConfig {
 
         source.registerCorsConfiguration("/**", config);
 
-        return new CorsFilter(source);
+        return source;
     }
 }
