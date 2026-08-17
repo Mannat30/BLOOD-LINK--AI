@@ -53,25 +53,25 @@ const RoleDashboard = () => {
     switch (role) {
 
         case 'ADMIN':
-            return <AdminDashboard />
+            return <AdminDashboard user={user} />
 
         case 'DONOR':
-            return <DonorDashboard />
+            return <DonorDashboard user={user} />
 
         case 'PATIENT':
-            return <PatientDashboard />
+            return <PatientDashboard user={user} />
 
         case 'HOSPITAL':
-            return <HospitalDashboard />
+            return <HospitalDashboard user={user} />
 
         case 'BLOOD_BANK':
-            return <BloodBankDashboard />
+            return <BloodBankDashboard user={user} />
 
         default:
+            console.log('Unknown role:', role)
             return <Navigate to="/" replace />
     }
 }
-
 
 // ======================================================
 // SETTINGS / PROFILE REDIRECT

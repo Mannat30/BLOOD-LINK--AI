@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { donationHistoryService } from '../services/apiService'
 import { toast } from 'react-toastify'
-import { HiCalendar, HiUser, HiCheck, HiX } from 'react-icons/hi'
+import { HiUser, HiArrowLeft } from 'react-icons/hi'
 
 const DonationHistory = () => {
   const [donations, setDonations] = useState([])

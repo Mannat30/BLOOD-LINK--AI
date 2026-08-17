@@ -14,31 +14,40 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration config = new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
-        config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5176",
-                "http://localhost:5177",
-                "http://localhost:5178"
-        ));
+        // Allow localhost frontend on any port
+        configuration.setAllowedOriginPatterns(
+                Arrays.asList(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*"
+                )
+        );
 
-        config.setAllowedMethods(Arrays.asList(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH",
-                "OPTIONS"
-        ));
+        configuration.setAllowedMethods(
+                Arrays.asList(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
 
-        config.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(
+                Arrays.asList("*")
+        );
 
-        config.setAllowCredentials(true);
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
         return source;
     }
