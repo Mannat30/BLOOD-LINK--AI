@@ -1,6 +1,7 @@
 package com.bloodlink.bloodlink_backend.config;
 
 import com.bloodlink.bloodlink_backend.security.CustomUserDetailsService;
+import com.bloodlink.bloodlink_backend.security.GoogleOAuth2FailureHandler;
 import com.bloodlink.bloodlink_backend.security.GoogleOAuth2SuccessHandler;
 import com.bloodlink.bloodlink_backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.security.web.SecurityFilterChain;
@@ -38,6 +38,8 @@ public class SecurityConfig {
     private final CorsConfigurationSource corsConfigurationSource;
 
     private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
+
+    private final GoogleOAuth2FailureHandler googleOAuth2FailureHandler;
 
 
     // =====================================================
@@ -71,14 +73,6 @@ public class SecurityConfig {
                 // ==========================
                 // SESSION
                 // ==========================
-                //
-                // OAuth2 login needs a short-lived
-                // HTTP session during the Google
-                // authorization flow.
-                //
-                // After Google login, we still use
-                // YOUR JWT for API authentication.
-                //
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -105,7 +99,7 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
-                        // OAuth2 authorization start
+                        // OAuth2 authorization
                         .requestMatchers(
                                 "/oauth2/**"
                         )
@@ -131,6 +125,9 @@ public class SecurityConfig {
                                 .successHandler(
                                         googleOAuth2SuccessHandler
                                 )
+                                .failureHandler(
+                                        googleOAuth2FailureHandler
+                                )
                 )
 
                 // ==========================
@@ -142,15 +139,8 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class
                 );
 
-
         return http.build();
     }
-
-
-    // =====================================================
-    // PASSWORD ENCODER
-    // =====================================================
-
 
 
     // =====================================================

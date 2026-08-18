@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -10,23 +10,68 @@ import {
   AiOutlineHeart,
   AiOutlineBell,
   AiOutlineLogout,
-  AiOutlineFileText,
   AiOutlineHistory
 } from 'react-icons/ai'
 
 import { authService } from '../services/apiService'
 
 const Layout = ({ children }) => {
+
   const location = useLocation()
   const navigate = useNavigate()
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // ==========================================
+  // AUTHENTICATION CHECK
+  // ==========================================
+
+  useEffect(() => {
+
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+      navigate('/', { replace: true })
+    }
+
+  }, [navigate, location.pathname])
+
+
+  // ==========================================
+  // BROWSER BACK / BF CACHE PROTECTION
+  // ==========================================
+
+  useEffect(() => {
+
+    const handlePageShow = () => {
+
+      const token = localStorage.getItem('token')
+
+      if (!token) {
+        window.location.replace('/')
+      }
+
+    }
+
+    window.addEventListener('pageshow', handlePageShow)
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow)
+    }
+
+  }, [])
+
+
+  // ==========================================
+  // USER
+  // ==========================================
+
   const user = JSON.parse(
       localStorage.getItem('user') || '{}'
   )
 
-  const userName = user?.name || 'BloodLink User'
+  const userName =
+      user?.name || 'BloodLink User'
 
   const userRole =
       user?.role
@@ -34,6 +79,7 @@ const Layout = ({ children }) => {
           ?.toLowerCase()
           ?.replace(/\b\w/g, (char) => char.toUpperCase()) ||
       'Member'
+
 
   // ==========================================
   // NAVIGATION
@@ -67,7 +113,9 @@ const Layout = ({ children }) => {
     }
   ]
 
+
   const isActive = (path) => {
+
     if (path === '/dashboard') {
       return location.pathname === '/dashboard'
     }
@@ -75,17 +123,22 @@ const Layout = ({ children }) => {
     return location.pathname.startsWith(path)
   }
 
+
   // ==========================================
   // LOGOUT
   // ==========================================
 
   const handleLogout = () => {
+
     authService.logout()
 
     setMobileMenuOpen(false)
 
-    navigate('/')
+    // Replace current history entry
+    window.location.replace('/')
+
   }
+
 
   // ==========================================
   // CLOSE MOBILE MENU
@@ -95,7 +148,13 @@ const Layout = ({ children }) => {
     setMobileMenuOpen(false)
   }
 
+
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
+
       <div className="min-h-screen bg-slate-50 text-slate-900">
 
         {/* =====================================================
@@ -120,7 +179,6 @@ const Layout = ({ children }) => {
                 <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
 
               </div>
-
 
               <div>
 
@@ -147,13 +205,11 @@ const Layout = ({ children }) => {
               Main Menu
             </p>
 
-
             <nav className="space-y-1.5">
 
               {navItems.map((item) => {
 
                 const Icon = item.icon
-
                 const active = isActive(item.path)
 
                 return (
@@ -168,12 +224,9 @@ const Layout = ({ children }) => {
                         }`}
                     >
 
-                      {/* Active indicator */}
-
                       {active && (
                           <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-red-600" />
                       )}
-
 
                       <Icon
                           className={`text-xl transition ${
@@ -187,7 +240,6 @@ const Layout = ({ children }) => {
                     {item.name}
                   </span>
 
-
                       {active && (
                           <span className="ml-auto h-2 w-2 rounded-full bg-red-600" />
                       )}
@@ -195,6 +247,7 @@ const Layout = ({ children }) => {
                     </Link>
 
                 )
+
               })}
 
             </nav>
@@ -210,7 +263,7 @@ const Layout = ({ children }) => {
             </p>
 
 
-            {/* Settings */}
+            {/* ================= SETTINGS ================= */}
 
             <Link
                 to="/settings"
@@ -234,29 +287,21 @@ const Layout = ({ children }) => {
 
               <div className="relative">
 
-                {/* Decorative circle */}
-
                 <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/10" />
-
 
                 <div className="relative">
 
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
-
                     <AiOutlineHeart className="text-xl" />
-
                   </div>
-
 
                   <h3 className="text-sm font-bold">
                     Every drop matters
                   </h3>
 
-
                   <p className="mt-1 text-xs leading-5 text-red-100">
                     Your contribution can help save a life.
                   </p>
-
 
                   <button
                       onClick={() => navigate('/blood-requests')}
@@ -286,7 +331,6 @@ const Layout = ({ children }) => {
 
               </div>
 
-
               <div className="min-w-0 flex-1">
 
                 <p className="truncate text-sm font-semibold text-slate-800">
@@ -298,7 +342,6 @@ const Layout = ({ children }) => {
                 </p>
 
               </div>
-
 
               <button
                   onClick={handleLogout}
@@ -439,7 +482,6 @@ const Layout = ({ children }) => {
                   {navItems.map((item) => {
 
                     const Icon = item.icon
-
                     const active = isActive(item.path)
 
                     return (
@@ -466,6 +508,7 @@ const Layout = ({ children }) => {
                         </Link>
 
                     )
+
                   })}
 
 

@@ -39,3 +39,12 @@ spring:
 
 jwt:
   secret: BloodLinkAI2026SuperSecretKeyForJWTAuthentication123
+
+# =========================
+# OAUTH DEBUG LOGGING
+# =========================
+
+logging:
+  level:
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.web.authentication: DEBUG

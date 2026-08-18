@@ -28,6 +28,7 @@ import {
 } from 'react-icons/hi'
 
 const Dashboard = () => {
+
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [donations, setDonations] = useState([])
@@ -35,15 +36,17 @@ const Dashboard = () => {
 
   const navigate = useNavigate()
 
+
   // ==========================================
   // FETCH USER DATA
   // ==========================================
 
   useEffect(() => {
+
     const token = localStorage.getItem('token')
 
     if (!token) {
-      navigate('/')
+      navigate('/', { replace: true })
       return
     }
 
@@ -55,73 +58,163 @@ const Dashboard = () => {
 
     fetchProfile(userData.role, userData)
     fetchDonations()
+
   }, [navigate])
 
+
+  // ==========================================
+  // PREVENT BROWSER BACK ON DASHBOARD
+  // ==========================================
+
+  useEffect(() => {
+
+    const preventBack = () => {
+      window.history.pushState(
+          null,
+          '',
+          window.location.href
+      )
+    }
+
+    // Add an extra history state
+    window.history.pushState(
+        null,
+        '',
+        window.location.href
+    )
+
+    window.addEventListener(
+        'popstate',
+        preventBack
+    )
+
+    return () => {
+      window.removeEventListener(
+          'popstate',
+          preventBack
+      )
+    }
+
+  }, [])
+
+
+  // ==========================================
+  // FETCH PROFILE
+  // ==========================================
+
   const fetchProfile = async (role, userData) => {
+
     try {
-      const userId = userData?.userId || userData?.id
+
+      const userId =
+          userData?.userId ||
+          userData?.id
 
       if (!userId) return
 
       switch (role) {
+
         case 'DONOR': {
-          const response = await donorService.getProfile(userId)
+
+          const response =
+              await donorService.getProfile(userId)
+
           setProfile(response.data)
+
           break
         }
 
         case 'PATIENT': {
-          const response = await patientService.getProfile(userId)
+
+          const response =
+              await patientService.getProfile(userId)
+
           setProfile(response.data)
+
           break
         }
 
         case 'HOSPITAL': {
-          const response = await hospitalService.getProfile(userId)
+
+          const response =
+              await hospitalService.getProfile(userId)
+
           setProfile(response.data)
+
           break
         }
 
         default:
           break
       }
+
     } catch (error) {
-      console.error('Error fetching profile:', error)
+
+      console.error(
+          'Error fetching profile:',
+          error
+      )
+
     }
   }
 
+
+  // ==========================================
+  // FETCH DONATIONS
+  // ==========================================
+
   const fetchDonations = async () => {
+
     try {
+
       const response =
           await donationHistoryService.getAllDonations()
 
       setDonations(response.data)
+
     } catch (error) {
-      console.error('Error fetching donations:', error)
+
+      console.error(
+          'Error fetching donations:',
+          error
+      )
+
     } finally {
+
       setLoading(false)
+
     }
   }
+
 
   // ==========================================
   // LOGOUT
   // ==========================================
 
   const handleLogout = () => {
+
     authService.logout()
 
-    navigate('/')
+    toast.info(
+        'Logged out successfully'
+    )
 
-    toast.info('Logged out successfully')
+    // Completely replace current history entry
+    window.location.replace('/')
+
   }
+
 
   // ==========================================
   // ROLE CONFIG
   // ==========================================
 
   const getRoleConfig = (role) => {
+
     switch (role) {
+
       case 'DONOR':
+
         return {
           label: 'Blood Donor',
           icon: HiUserGroup,
@@ -131,6 +224,7 @@ const Dashboard = () => {
         }
 
       case 'PATIENT':
+
         return {
           label: 'Patient',
           icon: HiHeart,
@@ -140,6 +234,7 @@ const Dashboard = () => {
         }
 
       case 'HOSPITAL':
+
         return {
           label: 'Hospital',
           icon: HiOfficeBuilding,
@@ -149,6 +244,7 @@ const Dashboard = () => {
         }
 
       case 'BLOOD_BANK':
+
         return {
           label: 'Blood Bank',
           icon: HiHeart,
@@ -158,6 +254,7 @@ const Dashboard = () => {
         }
 
       case 'ADMIN':
+
         return {
           label: 'Administrator',
           icon: HiChartBar,
@@ -167,6 +264,7 @@ const Dashboard = () => {
         }
 
       default:
+
         return {
           label: 'Member',
           icon: HiUser,
@@ -177,15 +275,19 @@ const Dashboard = () => {
     }
   }
 
+
   // ==========================================
   // QUICK ACTIONS
   // ==========================================
 
   const getQuickActions = () => {
+
     const actions = []
 
     if (user?.role === 'DONOR') {
+
       actions.push(
+
           {
             title: 'Find Blood Requests',
             description:
@@ -194,6 +296,7 @@ const Dashboard = () => {
             color: 'red',
             path: '/blood-requests'
           },
+
           {
             title: 'Update Donor Profile',
             description:
@@ -202,11 +305,15 @@ const Dashboard = () => {
             color: 'blue',
             path: '/donor-profile'
           }
+
       )
     }
 
+
     if (user?.role === 'PATIENT') {
+
       actions.push(
+
           {
             title: 'Request Blood',
             description:
@@ -215,6 +322,7 @@ const Dashboard = () => {
             color: 'red',
             path: '/blood-request/create'
           },
+
           {
             title: 'My Blood Requests',
             description:
@@ -223,6 +331,7 @@ const Dashboard = () => {
             color: 'blue',
             path: '/blood-requests'
           },
+
           {
             title: 'Update Profile',
             description:
@@ -231,11 +340,15 @@ const Dashboard = () => {
             color: 'green',
             path: '/patient-profile'
           }
+
       )
     }
 
+
     if (user?.role === 'HOSPITAL') {
+
       actions.push(
+
           {
             title: 'Hospital Profile',
             description:
@@ -244,6 +357,7 @@ const Dashboard = () => {
             color: 'blue',
             path: '/hospital-profile'
           },
+
           {
             title: 'Blood Requests',
             description:
@@ -252,40 +366,50 @@ const Dashboard = () => {
             color: 'red',
             path: '/blood-requests'
           }
+
       )
     }
+
 
     if (user?.role === 'BLOOD_BANK') {
-      actions.push(
-          {
-            title: 'Blood Requests',
-            description:
-                'Review current blood requirements',
-            icon: HiHeart,
-            color: 'red',
-            path: '/blood-requests'
-          }
-      )
+
+      actions.push({
+
+        title: 'Blood Requests',
+        description:
+            'Review current blood requirements',
+        icon: HiHeart,
+        color: 'red',
+        path: '/blood-requests'
+
+      })
     }
 
+
     actions.push({
+
       title: 'Donation History',
       description:
           'View previous donation activity',
       icon: HiCalendar,
       color: 'green',
       path: '/donation-history'
+
     })
+
 
     return actions
   }
+
 
   // ==========================================
   // LOADING
   // ==========================================
 
   if (loading) {
+
     return (
+
         <div className="flex min-h-[70vh] items-center justify-center">
 
           <div className="text-center">
@@ -306,16 +430,22 @@ const Dashboard = () => {
     )
   }
 
+
   const firstName =
       user?.name?.split(' ')[0] || 'User'
 
-  const roleConfig = getRoleConfig(user?.role)
+  const roleConfig =
+      getRoleConfig(user?.role)
 
-  const RoleIcon = roleConfig.icon
+  const RoleIcon =
+      roleConfig.icon
 
-  const quickActions = getQuickActions()
+  const quickActions =
+      getQuickActions()
+
 
   return (
+
       <div className="mx-auto max-w-7xl space-y-7">
 
         {/* ==========================================
@@ -323,8 +453,6 @@ const Dashboard = () => {
       =========================================== */}
 
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-red-600 to-rose-700 p-6 text-white shadow-xl shadow-red-600/10 sm:p-8 lg:p-10">
-
-          {/* Decorative elements */}
 
           <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10" />
 
@@ -335,16 +463,12 @@ const Dashboard = () => {
 
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
 
-            {/* Welcome */}
-
             <div className="max-w-2xl">
 
               <div className="mb-5 flex flex-wrap items-center gap-2">
 
               <span className="rounded-full border border-white/10 bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
-
                 BloodLink Member
-
               </span>
 
                 <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1.5 text-xs font-semibold text-emerald-100">
@@ -361,21 +485,20 @@ const Dashboard = () => {
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
 
                 Welcome back,
+
                 <br className="sm:hidden" />
+
                 {' '}
+
                 {firstName}! 👋
 
               </h1>
 
 
               <p className="mt-4 max-w-xl text-sm leading-6 text-red-100 sm:text-base">
-
                 {roleConfig.description}
-
               </p>
 
-
-              {/* Buttons */}
 
               <div className="mt-7 flex flex-wrap gap-3">
 
@@ -434,8 +557,6 @@ const Dashboard = () => {
             </div>
 
 
-            {/* Role visual */}
-
             <div className="hidden shrink-0 lg:flex lg:flex-col lg:items-center">
 
               <div className="flex h-40 w-40 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur">
@@ -465,8 +586,6 @@ const Dashboard = () => {
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-          {/* Role */}
-
           <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
 
             <div className="flex items-start justify-between">
@@ -493,8 +612,6 @@ const Dashboard = () => {
 
           </div>
 
-
-          {/* Blood Group */}
 
           <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
 
@@ -523,8 +640,6 @@ const Dashboard = () => {
           </div>
 
 
-          {/* Donations */}
-
           <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
 
             <div className="flex items-start justify-between">
@@ -551,8 +666,6 @@ const Dashboard = () => {
 
           </div>
 
-
-          {/* Account Status */}
 
           <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
 
@@ -645,17 +758,21 @@ const Dashboard = () => {
                   hover: 'group-hover:bg-purple-600',
                   arrow: 'text-purple-500'
                 }
+
               }
 
               const colors =
                   colorClasses[action.color] ||
                   colorClasses.blue
 
+
               return (
 
                   <button
                       key={action.title}
-                      onClick={() => navigate(action.path)}
+                      onClick={() =>
+                          navigate(action.path)
+                      }
                       className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
                   >
 
@@ -690,6 +807,7 @@ const Dashboard = () => {
                   </button>
 
               )
+
             })}
 
           </div>

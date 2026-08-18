@@ -39,6 +39,26 @@ import Notifications from './pages/Notifications.jsx'
 
 
 // ======================================================
+// LOGIN ROUTE PROTECTION
+// ======================================================
+//
+// If user is already logged in and tries to open "/",
+// send them back to dashboard.
+//
+
+const AuthRedirect = () => {
+
+    const token = localStorage.getItem('token')
+
+    if (token) {
+        return <Navigate to="/dashboard" replace />
+    }
+
+    return <Login />
+}
+
+
+// ======================================================
 // ROLE BASED DASHBOARD
 // ======================================================
 
@@ -53,25 +73,25 @@ const RoleDashboard = () => {
     switch (role) {
 
         case 'ADMIN':
-            return <AdminDashboard user={user} />
+            return <AdminDashboard />
 
         case 'DONOR':
-            return <DonorDashboard user={user} />
+            return <DonorDashboard />
 
         case 'PATIENT':
-            return <PatientDashboard user={user} />
+            return <PatientDashboard />
 
         case 'HOSPITAL':
-            return <HospitalDashboard user={user} />
+            return <HospitalDashboard />
 
         case 'BLOOD_BANK':
-            return <BloodBankDashboard user={user} />
+            return <BloodBankDashboard />
 
         default:
-            console.log('Unknown role:', role)
             return <Navigate to="/" replace />
     }
 }
+
 
 // ======================================================
 // SETTINGS / PROFILE REDIRECT
@@ -228,7 +248,7 @@ function App() {
 
                 <Route
                     path="/"
-                    element={<Login />}
+                    element={<AuthRedirect />}
                 />
 
                 <Route
