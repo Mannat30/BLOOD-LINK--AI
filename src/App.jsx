@@ -39,22 +39,47 @@ import Notifications from './pages/Notifications.jsx'
 
 
 // ======================================================
-// LOGIN ROUTE PROTECTION
+// LOGIN PAGE
 // ======================================================
 //
-// If user is already logged in and tries to open "/",
-// send them back to dashboard.
+// "/" will ALWAYS open the Login page.
 //
+// Even if an old token exists, "/" will still show Login.
+// After successful login, Login.jsx redirects to /dashboard.
+// ======================================================
 
 const AuthRedirect = () => {
 
+    return <Login />
+}
+
+
+// ======================================================
+// PROTECTED ROUTE
+// ======================================================
+//
+// All application pages are protected.
+//
+// If there is no token:
+//     /dashboard
+//          ↓
+//     /
+//          ↓
+//     Login page
+//
+// If token exists:
+//     Allow access to application.
+// ======================================================
+
+const ProtectedRoute = ({ children }) => {
+
     const token = localStorage.getItem('token')
 
-    if (token) {
-        return <Navigate to="/dashboard" replace />
+    if (!token) {
+        return <Navigate to="/" replace />
     }
 
-    return <Login />
+    return children
 }
 
 
@@ -244,12 +269,15 @@ function App() {
 
             <Routes>
 
-                {/* ================= AUTH ================= */}
+                {/* ================= LOGIN ================= */}
 
                 <Route
                     path="/"
                     element={<AuthRedirect />}
                 />
+
+
+                {/* ================= REGISTRATION ================= */}
 
                 <Route
                     path="/register"
@@ -257,11 +285,15 @@ function App() {
                 />
 
 
-                {/* ================= APPLICATION ================= */}
+                {/* ================= PROTECTED APPLICATION ================= */}
 
                 <Route
                     path="/*"
-                    element={<AppRoutes />}
+                    element={
+                        <ProtectedRoute>
+                            <AppRoutes />
+                        </ProtectedRoute>
+                    }
                 />
 
             </Routes>
